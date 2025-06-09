@@ -5,7 +5,7 @@ export class CameraManager {
     const fov = 75;
     const aspect = width / height;
     const near = 0.1;
-    const far = 10000;
+    const far = 1000;
 
     this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     this.setInitialPosition();
@@ -23,11 +23,11 @@ export class CameraManager {
     return this.camera;
   }
 
-    /**
-     * تقوم بتحديث نسبة العرض إلى الارتفاع للكاميرا عند تغيير حجم النافذة.
-     * @param {number} width - العرض الجديد.
-     * @param {number} height - الارتفاع الجديد.
-     */
+  /**
+   * تقوم بتحديث نسبة العرض إلى الارتفاع للكاميرا عند تغيير حجم النافذة.
+   * @param {number} width - العرض الجديد.
+   * @param {number} height - الارتفاع الجديد.
+   */
   updateAspectRatio(width, height) {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix(); // يجب استدعاء هذه الدالة بعد تغيير أي خاصية للكاميرا

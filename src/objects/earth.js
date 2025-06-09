@@ -1,5 +1,5 @@
 import * as THREE from "three";
-
+import { EARTH_VISUAL_RADIUS } from "../physics/constants";
 export class Earth {
   constructor() {
     const geometry = new THREE.SphereGeometry(EARTH_VISUAL_RADIUS, 64, 64);
@@ -15,14 +15,9 @@ export class Earth {
     // رح نحط ال الارض ب 000 منشان تسهيل القياسات تبع r
   }
 
+  getMesh() {
+    return this.mesh;
+  }
 
-      getMesh() {
-        return this.mesh;
-    }
-
-// update() {
-//اذا حبينا ندور الارض 
-
-//     }
-
+  update(deltaTime) {}
 }
