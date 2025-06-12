@@ -5,8 +5,14 @@
     "three": "^0.177.0"
   },
   "devDependencies": {
+    "@types/dat.gui": "^0.7.13",
     "@types/node": "^24.0.1",
     "typescript": "^5.8.3",
     "vite": "^6.3.5"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   }
 }
