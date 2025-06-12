@@ -1,77 +1,72 @@
 // src/physics/PhysicsEngine.js
 
-import * as THREE from 'three';
-import { Satellite } from '../objects/satellite.js'; // نحتاج لاستيراد القمر الصناعي لإنشائه هنا
-import { integrateEuler } from './integrators/EulerIntegrator.js'; // استيراد أويلر
-import { integrateRungeKutta4 } from './integrators/RungeKutta4Integrator.js'; // استيراد RK4
+import { integrateEuler } from "./integrators/EulerComer.js";
+import { integrateRungeKutta4 } from "./integrators/RungeKutta4.js";
+import { DEFAULT_SIMULATION_SPEED_MULTIPLIER, INTEGRATION_TIMESTEP } from "../physics/constants.js";
 
 /**
- * فئة PhysicsEngine: مسؤولة عن إدارة الكائنات التي تتأثر بالفيزياء وتحديث حالتها.
- * تعمل كـ "منظم حالة" للجانب الفيزيائي، وتخفف العبء عن main.js.
+ * فئة PhysicsEngine: تدير جميع الكائنات الفيزيائية في المحاكاة وتطبق عليها قوانين الفيزياء.
+ * هي المسؤولة عن تحديث موضع وسرعة كل قمر صناعي خطوة بخطوة.
  */
 export class PhysicsEngine {
     constructor() {
-        this.satellites = []; // مصفوفة لتخزين الأقمار الصناعية
-        this.selectedIntegrator = 'RK4'; // الافتراضي: 'RK4'. يمكن أن يكون 'Euler' أيضاً.
+        this.physicalObjects = []; // مصفوفة لتخزين جميع الكائنات التي تتأثر بالفيزياء (مثل الأقمار الصناعية)
+        this.integratorMethod = "Euler"; // طريقة التكامل الافتراضية: "Euler" أو "RK4"
+        this.simulationSpeedMultiplier = DEFAULT_SIMULATION_SPEED_MULTIPLIER; // عامل سرعة المحاكاة (1.0 = سرعة حقيقية)
     }
 
     /**
-     * ينشئ قمراً صناعياً جديداً ويضيفه إلى المحرك الفيزيائي.
-     * يمكن تحديد الموضع والسرعة الأولية مباشرة هنا.
-     *
-     * @param {THREE.Vector3} initialPosition - الموضع الأولي (بالمتر).
-     * @param {THREE.Vector3} initialVelocity - السرعة الأولية (متر/ثانية).
-     * @param {number} [visualRadius=0.2] - نصف قطر القمر الصناعي البصري.
-     * @param {number} [color=0xff0000] - لون القمر الصناعي البصري.
-     * @returns {Satellite} كائن القمر الصناعي الذي تم إنشاؤه.
+     * يضيف كائناً فيزيائياً إلى المحرك ليتم تضمينه في حسابات الفيزياء.
+     * @param {object} object - الكائن الذي يجب إضافته (يجب أن يحتوي على دالة updatePhysics).
      */
-    addSatellite(initialPosition, initialVelocity, visualRadius = 0.2, color = 0xff0000) {
-        const satellite = new Satellite(initialPosition, initialVelocity, visualRadius, color);
-        this.satellites.push(satellite);
-        return satellite;
+    addObject(object) {
+        this.physicalObjects.push(object);
     }
 
     /**
-     * يحدد طريقة التكامل العددي التي سيتم استخدامها لتحديث الفيزياء.
-     * @param {string} method - اسم الطريقة: 'Euler' أو 'RK4'.
+     * يزيل كائناً فيزيائياً من المحرك.
+     * @param {object} object - الكائن الذي يجب إزالته.
+     */
+    removeObject(object) {
+        this.physicalObjects = this.physicalObjects.filter(obj => obj !== object);
+    }
+
+    /**
+     * يحدد طريقة التكامل العددي التي سيتم استخدامها.
+     * @param {string} method - اسم الطريقة ("Euler" أو "RK4").
      */
     setIntegratorMethod(method) {
-        if (method === 'Euler' || method === 'RK4') {
-            this.selectedIntegrator = method;
-            console.log(`Integrator set to: ${method}`);
+        if (method === "Euler" || method === "RK4") {
+            this.integratorMethod = method;
+            console.log(`طريقة التكامل تغيرت إلى: ${method}`);
         } else {
-            console.warn(`Invalid integrator method: ${method}. Using default 'RK4'.`);
+            console.warn(`طريقة التكامل "${method}" غير مدعومة.`);
         }
     }
 
     /**
-     * يقوم بتحديث حالة جميع الكائنات الفيزيائية التي يديرها المحرك.
-     * يتم استدعاؤها في كل إطار من حلقة الرسوميات.
+     * هذه هي الدالة الأساسية التي تقوم بتحديث حالة جميع الكائنات الفيزيائية.
+     * يتم استدعاؤها في كل إطار من حلقة الرسوم المتحركة الرئيسية.
      *
-     * @param {number} deltaTime - الخطوة الزمنية (بالثواني).
+     * @param {number} realDeltaTime - الفارق الزمني الحقيقي (بالثواني) منذ الإطار الأخير.
      */
-    update(deltaTime) {
-        // نختار دالة التكامل بناءً على الطريقة المحددة
-        let integrateFunction;
-        if (this.selectedIntegrator === 'Euler') {
-            integrateFunction = integrateEuler;
-        } else { // الافتراضي هو RK4
-            integrateFunction = integrateRungeKutta4;
-        }
+    update(realDeltaTime) {
+        // تحديد دالة التكامل بناءً على الطريقة المختارة
+        const integrateFunction = this.integratorMethod === "Euler" ? integrateEuler : integrateRungeKutta4;
 
-        // تحديث كل قمر صناعي باستخدام دالة التكامل المختارة
-        for (const satellite of this.satellites) {
-            // هنا نمرر الدوال الفيزيائية المنفصلة لـ Satellite.js ليقوم بتحديث نفسه
-            // Satellite.js سيعرف كيف يستخدم integrateFunction على خصائصه الفيزيائية
-            satellite.updateWithCustomIntegrator(deltaTime, integrateFunction);
-        }
-    }
+        // نحسب عدد الخطوات الفيزيائية التي يجب أن تحدث في هذا الإطار.
+        // نضرب في realDeltaTime لضبط سرعة المحاكاة بناءً على أداء المتصفح،
+        // ونقسم على INTEGRATION_TIMESTEP للحصول على عدد التكرارات.
+        // Math.ceil يضمن أننا نغطي الفترة الزمنية بأكملها.
+        const numPhysicsSteps = Math.ceil(realDeltaTime * this.simulationSpeedMultiplier / INTEGRATION_TIMESTEP);
 
-    /**
-     * الحصول على جميع الأقمار الصناعية التي يديرها المحرك.
-     * @returns {Array<Satellite>}
-     */
-    getSatellites() {
-        return this.satellites;
+        // نقوم بتكرار خطوات التكامل لجميع الكائنات الفيزيائية.
+        // كل تكرار يمثل خطوة زمنية صغيرة وثابتة (INTEGRATION_TIMESTEP).
+        for (let i = 0; i < numPhysicsSteps; i++) {
+            this.physicalObjects.forEach(object => {
+                // نمرر خطوة التكامل الثابتة إلى دالة updatePhysics لكل كائن.
+                object.updatePhysics(INTEGRATION_TIMESTEP, integrateFunction);
+            });
+        }
     }
 }
