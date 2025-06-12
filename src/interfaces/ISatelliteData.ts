@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-// import { IntegratorMethod } from '../utils/types'; 
+import { IntegratorMethod } from '../utils/types'; 
 
 export interface ISatelliteData{
 
@@ -7,7 +7,7 @@ export interface ISatelliteData{
     name:string;
     initialPosition: Vector3;
     initialVelocity: Vector3;
-    // selectedIntegrator: IntegratorMethod;
+    selectedIntegrator: IntegratorMethod;
 
 
 
