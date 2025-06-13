@@ -1,52 +1,70 @@
-import { Mesh } from "three";
-import {
-  EARTH_RADIUS_METERS,
-  METERS_TO_THREE_UNITS_FACTOR,
-} from "../physics/constants";
-import { SphereGeometry } from "three";
-import { Object3D } from "three";
-import { GLTFLoader } from "three/examples/jsm/Addons.js";
+// src/objects/earth.ts
 
+// هذا الكلاس يمثل كوكب الأرض في المحاكاة ككرة بسيطة.
+// مسؤولياته:
+// 1.  إنشاء شكل كروي للأرض (بدلاً من تحميل نموذج GLB).
+// 2.  تحديد حجم الأرض وموضعها.
+// 3.  إدارة دوران الأرض حول محورها.
+
+// نستورد الأدوات الأساسية من Three.js
+import * as THREE from 'three';
+
+// نستورد الثوابت الفيزيائية التي نحتاجها، مثل نصف قطر الأرض
+import { EARTH_RADIUS_METERS, METERS_TO_THREE_UNITS_FACTOR } from '../physics/constants';
+
+/**
+ * كلاس Earth
+ *
+ * يمثل كوكب الأرض ككرة بسيطة في المشهد ثلاثي الأبعاد.
+ * لا يقوم بتحميل نماذج GLB.
+ */
 export class Earth {
-  public mesh: Object3D | null = null;
-  public isLoaded: boolean = false;
+    // mesh: الكائن ثلاثي الأبعاد الذي يمثل الأرض في Three.js.
+    // الآن سيكون من نوع Mesh (كرة) وليس Group.
+    public mesh: THREE.Mesh | null = null;
+    public isLoaded: boolean = false; // سيكون دائمًا صحيحًا لأننا لا نحمل شيئًا.
 
-  constructor() {
-    const earthRadiusThreeUnits =
-      EARTH_RADIUS_METERS * METERS_TO_THREE_UNITS_FACTOR;
-    console.log(`Earth radius in Three.js units: ${earthRadiusThreeUnits}`);
-    const loader = new GLTFLoader();
+    // هذه المتغيرات لتحديد سرعة دوران الأرض (قابلة للتعديل).
+    private rotationSpeed: number = 0.00007292115; // سرعة دوران الأرض (radian/second)
 
-    loader.load(
-      "/assets/models/earth.glb", // مسار ملف GLB، يجب أن يكون في مجلد public/assets/models
-      (gltf) => {
-        this.mesh = gltf.scene;
+    /**
+     * مُنشئ كلاس Earth.
+     * يقوم بإنشاء كرة بسيطة لتمثيل الأرض.
+     */
+    constructor() {
+        console.log("Earth: Initializing Earth object (as a simple sphere)...");
 
-        this.mesh.position.set(0, 0, 0);
+        // الخطوة 1: إنشاء هندسة كروية (SphereGeometry) للأرض.
+        // نصف قطر الأرض في وحدات Three.js: (نحو 6371 كيلومتر = 6.371 * 10^6 متر)
+        // Three.js يستخدم وحدة "مرنة" لتحديد الحجم.
+        // لذا نستخدم عامل التحويل لتحويل المتر إلى وحدة Three.js.
+        const radius = EARTH_RADIUS_METERS * METERS_TO_THREE_UNITS_FACTOR;
+        const geometry = new THREE.SphereGeometry(radius, 64, 64); // نصف القطر، عدد الشرائح أفقياً وعمودياً (كلما زاد الرقم زادت النعومة)
 
-        console.log("Earth model loaded successfully!", this.mesh);
-        this.isLoaded = true; // نحدد أن النموذج تم تحميله بنجاح
-      },
-      (xhr) => {
-        console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
-      },
-      // دالة يتم استدعاؤها عند حدوث خطأ في التحميل.
-      (error) => {
-        console.error(
-          "An error occurred while loading the Earth model:",
-          error
-        );
-      }
-    );
-  }
+        // الخطوة 2: إنشاء مادة (Material) للأرض.
+        // MeshStandardMaterial تتفاعل مع الإضاءة.
+        const material = new THREE.MeshStandardMaterial({
+            color: 0x0000ff, // لون أزرق بسيط للأرض
+            roughness: 0.8, // عامل الخشونة (يؤثر على طريقة انعكاس الضوء)
+            metalness: 0.1  // عامل المعدنية (يؤثر على طريقة انعكاس الضوء)
+        });
 
-  updateRotation(deltaTime: number): void {
-    if (!this.mesh) {
-      return;
+        // الخطوة 3: إنشاء الكائن ثلاثي الأبعاد (Mesh) ووضعه في الموضع (0,0,0).
+        this.mesh = new THREE.Mesh(geometry, material);
+        this.mesh.position.set(0, 0, 0); // نضع الأرض في مركز المشهد (0,0,0)
+
+        this.isLoaded = true; // بما أننا لم نحمل شيئاً، الكائن جاهز فوراً.
+        console.log(`Earth: Simple sphere created with radius ${radius} Three.js units.`);
     }
 
-    const rotationSpeedRadPerSecond = (2 * Math.PI) / 86164;
-
-    this.mesh.rotation.y += rotationSpeedRadPerSecond * deltaTime;
-  }
+    /**
+     * يُحدّث دوران الكرة الأرضية حول محورها.
+     * @param deltaTime - الوقت المنقضي بالثواني منذ آخر تحديث.
+     */
+    public updateRotation(deltaTime: number): void {
+        if (this.mesh) {
+            // قم بتدوير الأرض حول المحور Y (للدوران حول القطبين).
+            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
+        }
+    }
 }

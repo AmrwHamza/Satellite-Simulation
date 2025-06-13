@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "node", // تأكد من أنها 'node' أو 'bundler'، وكلاهما يجب أن يعمل
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx", // إذا لم تستخدم React، يمكنك إزالة هذا السطر أو تغييره
+    "types": ["node", "three"] // **هذا السطر مهم جدًا**: يضمن تضمين تعريفات أنواع Node.js و Three.js
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx"], // تضمين جميع ملفات TypeScript
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "target": "ESNext", // تم تصحيح هذا السطر: لا يوجد علامات اقتباس مزدوجة إضافية
+    "types": ["node"]
+  },
+  "include": ["vite.config.ts"]
+}
